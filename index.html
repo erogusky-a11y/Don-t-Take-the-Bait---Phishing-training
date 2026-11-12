@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Don’t Take the Bait: A Phishing Training Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#94b0c2; --bg2:#8aa6b9;
+  --panel:#f4f4f4; --ink:#1a1c2c; --muted:#333c57;
+  --edge:#1a1c2c; --frame:#3b5dc9; --accent:#ffcd75;
+  --good-bg:#c6efa9; --bad-bg:#f5c6cf;
+  --btn:#b13e53; --btn-ink:#f4f4f4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#1a1c2c; --bg2:#20243a;
+    --panel:#29366f; --ink:#f4f4f4; --muted:#c3d2dc;
+    --edge:#0b0c14; --frame:#41a6f6; --accent:#ffcd75;
+    --good-bg:#257179; --bad-bg:#5d275d;
+    --btn:#ef7d57; --btn-ink:#1a1c2c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#1a1c2c; --bg2:#20243a;
+  --panel:#29366f; --ink:#f4f4f4; --muted:#c3d2dc;
+  --edge:#0b0c14; --frame:#41a6f6; --accent:#ffcd75;
+  --good-bg:#257179; --bad-bg:#5d275d;
+  --btn:#ef7d57; --btn-ink:#1a1c2c;
+}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%}
+body{
+  margin:0;min-height:100%;color:var(--ink);
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(45deg,var(--bg2) 25%,transparent 25%,transparent 75%,var(--bg2) 75%),
+    linear-gradient(45deg,var(--bg2) 25%,transparent 25%,transparent 75%,var(--bg2) 75%);
+  background-size:8px 8px;background-position:0 0,4px 4px;
+  font-family:"Atkinson Hyperlegible",Verdana,"Segoe UI",sans-serif;
+  font-size:1.0625rem;line-height:1.6;
+}
+main{max-width:760px;margin:0 auto;padding:1.25rem 1rem 3rem}
+.px{font-family:"Press Start 2P","Courier New",monospace;font-weight:400}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem 1rem;margin-bottom:.9rem}
+h1{font-family:"Press Start 2P","Courier New",monospace;font-weight:400;font-size:clamp(1rem,4.6vw,1.65rem);line-height:1.25;margin:0;text-shadow:3px 3px 0 var(--accent)}
+.status{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center}
+.fins{display:flex;gap:3px}
+.fins img{width:32px;height:18px;image-rendering:pixelated}
+.fins img.lost{filter:grayscale(1);opacity:.3}
+.score{font-family:"Press Start 2P",monospace;font-size:.8rem;min-width:6.5rem;text-align:right;font-variant-numeric:tabular-nums}
+.guide-btn{font:inherit;font-weight:700;font-size:.9rem;color:var(--ink);background:var(--panel);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:.3rem .7rem;cursor:pointer}
+.guide-btn:disabled{opacity:.45;cursor:not-allowed}
+.guide-btn[aria-pressed="false"]{opacity:.7;text-decoration:line-through}
+.screen{position:relative;border:4px solid var(--edge);box-shadow:6px 6px 0 var(--edge);line-height:0;background:#1a1c2c}
+#scene{display:block;width:100%;height:auto;image-rendering:pixelated}
+#pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;transform:translate(-50%,-50%);font-family:"Press Start 2P",monospace;font-size:clamp(.6rem,2vw,.95rem);line-height:1;white-space:nowrap;color:#ffcd75;text-shadow:2px 2px 0 #1a1c2c,-1px -1px 0 #1a1c2c;animation:floatup 1.3s steps(10) forwards}
+.pop.bad{color:#f4f4f4;text-shadow:2px 2px 0 #b13e53,-1px -1px 0 #1a1c2c}
+.pop.q{color:#f4f4f4}
+@keyframes floatup{0%{opacity:1;margin-top:0}70%{opacity:1}100%{opacity:0;margin-top:-30px}}
+.tracker{list-style:none;display:flex;gap:4px;padding:0;margin:.9rem 0 1rem}
+.tracker li{flex:1;height:10px;background:var(--panel);border:2px solid var(--edge);opacity:.5}
+.tracker li.done{background:#38b764;opacity:1}
+.tracker li.now{background:var(--accent);opacity:1}
+.panel{background:var(--panel);border:4px solid var(--edge);box-shadow:inset 0 0 0 3px var(--frame),6px 6px 0 var(--edge);padding:1.5rem 1.4rem}
+.round-label{font-family:"Press Start 2P",monospace;font-size:.62rem;line-height:1.7;color:var(--muted);margin:0 0 .8rem}
+h2{font-family:"Press Start 2P","Courier New",monospace;font-weight:400;font-size:1rem;line-height:1.5;margin:0 0 1rem}
+h3{font-family:"Press Start 2P","Courier New",monospace;font-weight:400;font-size:.8rem;line-height:1.6;margin:1.6rem 0 .8rem}
+p{max-width:64ch}
+.q{font-size:1.15rem;font-weight:700;margin:0 0 1rem}
+.big-tag{display:inline-block;font-family:"Press Start 2P",monospace;font-size:.6rem;background:var(--accent);color:#1a1c2c;padding:.35rem .5rem;margin-bottom:.8rem;border:2px solid var(--edge)}
+.opts{display:grid;gap:.65rem}
+.opts.two{grid-template-columns:1fr 1fr}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--panel);border:3px solid var(--edge);box-shadow:3px 3px 0 var(--edge);padding:.7rem .9rem;cursor:pointer}
+.opts.two .opt{text-align:center;font-weight:700}
+.opt:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 40%,var(--panel))}
+.opt:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--edge)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--good-bg)}
+.opt.wrong{background:var(--bad-bg)}
+.opt.dim{opacity:.5}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.feedback{margin-top:1rem;padding:.8rem 1rem;border:3px solid var(--edge);display:none}
+.feedback.show{display:block}
+.feedback.good{background:var(--good-bg)}
+.feedback.bad{background:var(--bad-bg)}
+.feedback strong{display:block;margin-bottom:.2rem}
+.btnrow{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.3rem}
+.go{font-family:"Press Start 2P",monospace;font-size:.7rem;line-height:1.4;cursor:pointer;background:var(--btn);color:var(--btn-ink);border:3px solid var(--edge);box-shadow:4px 4px 0 var(--edge);padding:.85rem 1.1rem}
+.go.ghost{background:var(--panel);color:var(--ink)}
+.go:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--edge)}
+.muted{color:var(--muted)}
+.lcard{border-left:6px solid var(--frame);padding:.1rem 0 .1rem 1rem;margin:0 0 1.2rem}
+.lcard p{margin:.2rem 0}
+.term{font-weight:700;font-size:1.1rem}
+.spot{color:var(--muted)}
+.note{background:color-mix(in srgb,var(--accent) 30%,var(--panel));border:3px solid var(--edge);padding:.7rem .9rem}
+ol.stages{padding-left:0;list-style:none;counter-reset:st;margin:0}
+ol.stages li{counter-increment:st;position:relative;padding:.1rem 0 .1rem 3rem;margin-bottom:1rem}
+ol.stages li::before{content:counter(st);position:absolute;left:0;top:.15rem;font-family:"Press Start 2P",monospace;font-size:.75rem;background:var(--accent);color:#1a1c2c;border:2px solid var(--edge);width:2.1rem;height:2.1rem;display:grid;place-items:center}
+ol.stages p{margin:.15rem 0}
+.slots{list-style:none;padding:0;margin:0 0 1rem;display:grid;gap:.45rem;counter-reset:s}
+.slots li{counter-increment:s;border:3px dashed var(--edge);padding:.55rem .8rem;min-height:3rem;opacity:.55}
+.slots li::before{content:counter(s) ". ";font-weight:700}
+.slots li.filled{border-style:solid;opacity:1;background:var(--good-bg)}
+.slots li span{display:block;font-size:.95rem}
+.pool{display:flex;flex-wrap:wrap;gap:.6rem}
+.pool .opt{font-weight:700}
+.shake{animation:shake .4s steps(4)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.card{border:4px solid var(--edge);padding:1rem 1.1rem;margin:1rem 0;background:color-mix(in srgb,var(--accent) 22%,var(--panel))}
+.card .rank{font-family:"Press Start 2P",monospace;font-size:.95rem;line-height:1.5;margin:.4rem 0}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem .9rem;margin:.7rem 0 0}
+.card dt{color:var(--muted)}
+.card dd{margin:0;font-weight:700}
+label{font-weight:700;display:block;margin-top:.5rem}
+input[type=text]{font:inherit;color:var(--ink);background:var(--panel);border:3px solid var(--edge);padding:.5rem .7rem;width:100%;max-width:22rem;margin-top:.3rem}
+details{margin-top:1.6rem;font-size:.95rem}
+summary{cursor:pointer;font-weight:700}
+.ref{padding-left:2em;text-indent:-2em}
+ul.rules{padding-left:1.2rem;margin:.5rem 0}
+ul.rules li{margin-bottom:.3rem}
+dialog{max-width:700px;width:calc(100% - 2rem);max-height:86vh;overflow:auto;color:var(--ink);background:var(--panel);border:4px solid var(--edge);box-shadow:inset 0 0 0 3px var(--frame),8px 8px 0 var(--edge);padding:1.4rem}
+dialog::backdrop{background:rgba(26,28,44,.75)}
+.dialog-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;position:sticky;top:-1.4rem;background:var(--panel);padding:.6rem 0;margin-top:-.6rem;z-index:1}
+.dialog-top h2{margin:0}
+dialog section{border-top:3px solid var(--edge);margin-top:1rem;padding-top:.4rem}
+@media (max-width:480px){.opts.two{grid-template-columns:1fr}.panel{padding:1.2rem 1rem}}
+@media (prefers-reduced-motion:reduce){.pop,.shake{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Don’t Take the Bait</h1>
+    <div class="status">
+      <div class="fins" id="fins" role="img" aria-label="Fins left"></div>
+      <div class="score" id="score" aria-live="polite">0 pts</div>
+      <button class="guide-btn" id="sndBtn" aria-pressed="true">Sound on</button>
+      <button class="guide-btn" id="musBtn" aria-pressed="false">Music off</button>
+      <button class="guide-btn" id="guideBtn">Field guide</button>
+    </div>
+  </header>
+
+  <div class="screen">
+    <canvas id="scene" width="240" height="120" aria-hidden="true"></canvas>
+    <div id="pops"></div>
+  </div>
+
+  <ol class="tracker" id="tracker" aria-label="Round progress"></ol>
+
+  <section class="panel" id="stage" aria-live="polite"></section>
+</main>
+
+<dialog id="guide" aria-labelledby="guideTitle">
+  <div class="dialog-top"><h2 id="guideTitle">Field guide</h2><button class="go ghost" id="guideClose">Close</button></div>
+  <div id="guideBody"></div>
+</dialog>
+
+<script>
+/* All content is drawn from: Bridgers, G., Hausman, C., Tomeo, A., & Vellala Umapathy, G. (2023).
+   Phishing for dummies (Cisco special ed.). John Wiley & Sons. */
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+const ROUNDS = [
+  {
+    title:'Know your lures', type:'mc',
+    blurb:'Every attack has a name. First, learn what each one is. Then match each move to the kind of phishing it is.',
+    lesson:[
+      {title:'What phishing is', cards:[
+        {term:'Phishing', def:'A scam delivered electronically, by email, text, phone call, website, or message, where the attacker pretends to be someone you trust. The goal is to get sensitive information out of you or to get malware onto your device.'},
+        {term:'Social engineering', def:'Attacking people instead of machines. Phishing works because it plays on human nature: we tend to trust others, we get curious, we react emotionally to alarming messages, and we’re often too busy to look closely.'},
+        {term:'What attackers want', def:'Usually login credentials or personal information they can use for fraud or to get at your money. Some go after an organization’s research, financial data, or health records. Others are after political attention, disruption, or spreading disinformation.'},
+        {term:'Malware', def:'Short for malicious software: programs built to damage, spy on, or take control of a device. Phishing is one of the main ways it gets in. A remote access trojan (RAT), for example, lets an attacker control your computer from far away.'}
+      ]},
+      {title:'Nets and spears', cards:[
+        {term:'Mass phishing', def:'One generic message sent to thousands or even millions of people at once. The attacker doesn’t care who bites, only that someone does.', spot:'Nothing in it is specific to you.'},
+        {term:'Spear phishing', def:'A targeted attack on one person. The attacker researches you through social media, public records, and other sources, then writes a message that seems to come from someone you know, like a coworker, your boss, or a friend. The goal is to get you to reveal information or do something, like send money or download a file.', spot:'It knows real details about you, and it still asks for something unusual.'},
+        {term:'Phishing-as-a-service', def:'Phishing sold like a business product. Criminals with little or no coding skill can buy a ready-made kit from one vendor and even pay another vendor to run the campaign for them.'}
+      ]},
+      {title:'Beyond the inbox', intro:'Email is the most common way phishing arrives, but it’s far from the only one. Attacks also come through compromised websites, social media, fake ads, text messages, QR codes, and workplace collaboration tools like Teams or Slack.', cards:[
+        {term:'Vishing', def:'Voice phishing: the attack comes as a phone call. Attackers now use automated text-to-speech systems and audio deepfakes to sound convincing.'},
+        {term:'Smishing', def:'Phishing by text message (SMS). Attackers scrape LinkedIn and other sources to map out who works where, collect mobile numbers, and send targeted texts, often pretending to be someone important.'}
+      ]},
+      {title:'Hidden traps', cards:[
+        {term:'Typosquatting', def:'Also called URL hijacking. The attacker registers a web address that’s nearly identical to a popular site and waits for people to mistype. The fake site can look almost exactly like the real one and is used to collect logins, credit card numbers, or other personal data.', spot:'Read the address bar letter by letter.'},
+        {term:'Adversary-in-the-middle (AiTM)', def:'Also called man-in-the-middle. The attacker secretly slips between you and someone you trust, like your bank, to listen in, change what’s being sent, or inject malicious code, then uses what they learn to trick you.'},
+        {term:'Steganography', def:'Hiding something malicious inside a file that looks harmless, like a photo or an audio attachment.'}
+      ]}
+    ],
+    qs:[
+      {q:'The same generic message goes out to thousands of inboxes at once, hoping a few people bite.',
+       options:['Mass phishing','Spear phishing','Steganography','Adversary-in-the-middle'],
+       why:'Mass phishing casts a wide net with one generic message. Spear phishing is the opposite: one target, lots of research.'},
+      {q:'An attacker studies your social media, then sends a message that looks like it came from your boss asking you to move some money.',
+       options:['Spear phishing','Mass phishing','Typosquatting','Vishing'],
+       why:'Spear phishing is customized. Attackers pull from social profiles and public records so the message seems to come from a colleague, boss, or friend.'},
+      {q:'Someone registers a web address one typo away from a site you visit every day and builds a lookalike login page there.',
+       options:['Typosquatting','Smishing','Spear phishing','Steganography'],
+       why:'Typosquatting, also called URL hijacking, waits for you to mistype a real address and land on the fake.'},
+      {q:'An attacker secretly sits between you and your bank’s website, reading and changing what passes back and forth.',
+       options:['Adversary-in-the-middle','Typosquatting','Mass phishing','Vishing'],
+       why:'Adversary-in-the-middle (also called man-in-the-middle) intercepts the conversation between two parties so the attacker can eavesdrop, tamper, or impersonate.'},
+      {q:'Your phone rings. The voice on the other end is computer-generated or an audio deepfake, and it wants your login.',
+       options:['Vishing','Smishing','Steganography','Mass phishing'],
+       why:'Vishing is voice phishing. Attackers now use automated text-to-speech and audio deepfakes on calls.'},
+      {q:'Attackers scrape LinkedIn to build an org chart, collect mobile numbers, and send targeted text messages.',
+       options:['Smishing','Vishing','Typosquatting','Adversary-in-the-middle'],
+       why:'Smishing is phishing by text message. Your public work profile is part of the attacker’s research.'},
+      {q:'Something malicious is hidden inside a photo or audio file that looks completely harmless.',
+       options:['Steganography','Typosquatting','Spear phishing','Smishing'],
+       why:'Steganography hides the dangerous part inside an innocent-looking file, which is why even image and audio attachments deserve caution.'},
+      {q:'Criminals rent a ready-made phishing kit, so someone with no coding skills can launch a polished attack.',
+       options:['Phishing-as-a-service','Typosquatting','Steganography','Mass phishing'],
+       why:'Phishing-as-a-service works like a business: one vendor sells the kit, another can run the campaign. You’ll meet a real one, “Greatness,” in the case files.'}
+    ]
+  },
+  {
+    title:'Anatomy of a catch', type:'order',
+    blurb:'Most phishing attacks follow the same five stages. Learn them, then put them back in order from memory.',
+    lesson:[
+      {title:'How an attack unfolds', intro:'Learn the order. You’ll need it in a minute.', steps:[
+        {term:'Reconnaissance', def:'The attacker scouts potential victims, often on social media: where you work, where you live, what you’re interested in.'},
+        {term:'Weaponization', def:'They build an attack plan around the weak spots they found.'},
+        {term:'Delivery', def:'They send the fake email, text, or social media message. It usually carries a malicious link or attachment and alarming content meant to make you hurry.'},
+        {term:'Exploitation', def:'You land on a fake portal and type in your credentials or personal information, and they take it.'},
+        {term:'Monetization', def:'They cash in: use your credentials to reach your money, or sell, siphon off, or ransom the stolen data. Money is what makes the whole effort worth it to them.'}
+      ]},
+      {title:'Words you’ll see', cards:[
+        {term:'Credentials', def:'The information that proves who you are to a system, usually a username and password.'},
+        {term:'Call-to-action (CTA)', def:'The thing a message wants you to do: click, download, log in, reply, pay. In a phishing message, the call-to-action is the hook.'},
+        {term:'Multifactor authentication (MFA)', def:'Requiring a second proof of identity on top of your password, like a code sent to your phone. Two-factor authentication (2FA) is the most common form. It helps a lot, but newer attacks try to steal those codes too.'},
+        {term:'Weaponized file', def:'An attachment built to install malware when you open it.'}
+      ]}
+    ],
+    stages:[
+      {name:'Reconnaissance', desc:'Scout victims on social media: where they work, where they live, what they’re into.'},
+      {name:'Weaponization', desc:'Build an attack plan around what they found.'},
+      {name:'Delivery', desc:'Send the email, text, or message, often with a link, an attachment, and fake urgency.'},
+      {name:'Exploitation', desc:'A fake portal collects credentials and personal information.'},
+      {name:'Monetization', desc:'Cash out: drain accounts, or sell or ransom the stolen data.'}
+    ]
+  },
+  {
+    title:'Bait or not?', type:'mc', binary:true,
+    blurb:'Quick calls. Learn the warning signs, then decide whether each move is safe or whether you’re taking the bait.',
+    lesson:[
+      {title:'Red flags', intro:'These come from the book’s checklist of anti-phishing advice.', cards:[
+        {term:'An unknown or odd sender', def:'Check the sender’s name and the actual email address before you respond.'},
+        {term:'Links or attachments you didn’t ask for', def:'If a message shows up unsolicited, don’t trust its links or attachments.'},
+        {term:'“Urgent!”', def:'Pressure to act fast is a tactic, not a coincidence. It’s designed to make you skip thinking.'},
+        {term:'Requests for personal or financial information', def:'Never hand these over just because an email asked for them.'},
+        {term:'Generic greetings', def:'“Dear Sir or Madam” suggests the sender doesn’t actually know who you are.'},
+        {term:'Deals that seem too good to be true', def:'They usually are.'}
+      ]},
+      {title:'Smart moves', cards:[
+        {term:'Go straight to the source', def:'If an email claims to be from your bank, your doctor, or a government office, open their website or call them yourself instead of using the email’s links.'},
+        {term:'Keep strangers off your computer', def:'Never give someone you don’t know access to your device, no matter how helpful they sound.'},
+        {term:'Report it', def:'Organizations want employees to report phishing attempts. Security is everyone’s job, and one person speaking up can stop a breach.'},
+        {term:'Lock down your accounts', def:'Turn on two-factor authentication and use a password manager.'}
+      ], note:'<b>The grammar trap.</b> The checklist also says to watch for spelling and grammar mistakes. That can still help, but AI chatbots now let attackers write clean, personalized messages. A perfectly written email can still be phishing.'}
+    ],
+    qs:[
+      {q:'Opening an attachment in an email you weren’t expecting.', answer:'Takes the bait',
+       why:'Don’t trust links or attachments in unsolicited emails. The Maze ransomware attack in the case files started with exactly this.'},
+      {q:'Typing your bank’s web address yourself instead of clicking the link in its email.', answer:'Safe move',
+       why:'When a message claims to be from your bank, your doctor, or the government, go straight to the source instead of using the email’s links.'},
+      {q:'Slowing down when an email is marked “urgent.”', answer:'Safe move',
+       why:'Alarming, urgent content is a standard part of the delivery stage. Urgency is designed to make you skip thinking.'},
+      {q:'Trusting an email because its spelling and grammar are flawless.', answer:'Takes the bait',
+       why:'The grammar trap. AI chatbots now help attackers write clean, error-free messages, so good grammar proves nothing.'},
+      {q:'Replying to an email that asks you to confirm your account number.', answer:'Takes the bait',
+       why:'Never hand over personal or financial information because an email asked for it.'},
+      {q:'Letting a friendly caller “from tech support” remote into your laptop.', answer:'Takes the bait',
+       why:'Don’t give a stranger access to your computer, no matter how helpful they sound.'},
+      {q:'Reporting a suspicious message to your IT or security team.', answer:'Safe move',
+       why:'Organizations want employees to report phishing attempts. In the Company X case, one employee’s alert is what caught the breach early.'},
+      {q:'Treating “Dear Sir or Madam” as a yellow flag.', answer:'Safe move',
+       why:'Generic greetings are a classic sign of mass phishing. The sender may not know who you are.'},
+      {q:'Pasting a credit card number into a team chat.', answer:'Takes the bait',
+       why:'Chat and collaboration tools are now attack targets. Forbes research found one 50,000-person retailer averaged about 1,500 shares of credit card information over Slack per month.'},
+      {q:'Turning on two-factor authentication and using a password manager.', answer:'Safe move',
+       why:'That’s exactly what Company X recommended to its users after its breach.'}
+    ]
+  },
+  {
+    title:'The numbers game', type:'mc',
+    blurb:'How big is the problem? Learn the terms behind the numbers, then make your best guess. Every answer comes with the real number and who found it.',
+    lesson:[
+      {title:'Terms behind the numbers', cards:[
+        {term:'Data breach', def:'An incident where attackers get into data they shouldn’t have, like customer records, employee files, or account details.'},
+        {term:'The human element', def:'Breaches where a person played a part: a mistake, misuse of their access, stolen credentials, or falling for social engineering.'},
+        {term:'Ransomware', def:'Malware that locks up an organization’s systems or data and demands payment. Some groups also steal the data first and threaten to leak it.'},
+        {term:'Vulnerability and zero-day', def:'A vulnerability is a flaw in software that attackers can exploit. A zero-day attack hits a flaw before defenders have had a chance to fix it.'},
+        {term:'CVSS', def:'The Common Vulnerability Scoring System, which rates how severe a vulnerability is on a scale that tops out at 10.'},
+        {term:'Log4j and Log4Shell', def:'Log4j is a widely used piece of Java software that keeps logs for applications. A critical flaw found in it at the end of 2021, nicknamed Log4Shell, can let an attacker take over a server. Criminals kept exploiting it, often through phishing, even after fixes came out.'}
+      ]},
+      {title:'Who’s counting', intro:'The book pulls its statistics from other organizations’ research. Here’s who they are.', cards:[
+        {term:'Verizon', def:'Publishes the Data Breach Investigations Report (DBIR), a yearly study of real breaches.'},
+        {term:'IBM', def:'Publishes research on what data breaches cost organizations.'},
+        {term:'Cisco', def:'A networking and security company. It sponsored this book and sells the security products it describes, so keep that in mind: a company that sells protection has a reason to make threats sound big.'},
+        {term:'Google Safe Browsing', def:'Google’s service that tracks dangerous websites.'},
+        {term:'World Economic Forum (WEF)', def:'Publishes the yearly Global Risks Report.'},
+        {term:'Veritas Technologies', def:'A data-management company that surveyed office workers about how they share information.'}
+      ], note:'A number is only as good as its source. These are the figures as the book reported them in 2023, so check the original report before you quote one in your own writing.'}
+    ],
+    qs:[
+      {q:'According to Cisco, about how many emails is a phishing attack?',
+       options:['1 in 99','1 in 9','1 in 999','1 in 9,999'],
+       why:'About 1 in 99, and roughly 30 percent of those get opened (Cisco, as reported in the book).'},
+      {q:'Verizon’s 2023 Data Breach Investigations Report: what share of breaches involve the human element?',
+       options:['74 percent','24 percent','49 percent','94 percent'],
+       why:'74 percent. People are part of nearly three out of four breaches.'},
+      {q:'An IBM report found phishing was the costliest cause of data breaches. What was the average cost?',
+       options:['USD 4.91 million','USD 49,100','USD 491,000','USD 49.1 million'],
+       why:'USD 4.91 million on average. Phishing was also the second most common cause, at 16 percent of breaches.'},
+      {q:'Data from Google Safe Browsing compares phishing sites to malware sites. How many phishing sites are there for every malware site?',
+       options:['Nearly 75','About 2','About 10','Over 1,000'],
+       why:'Nearly 75 phishing sites for every malware site.'},
+      {q:'The Log4Shell vulnerability got what score on the CVSS severity scale?',
+       options:['10','4','7','9'],
+       why:'A 10, the highest possible. An attacker who exploits it can take over an affected server.'},
+      {q:'Per the World Economic Forum’s 2022 Global Risks Report, how much did ransomware increase in 2020?',
+       options:['435 percent','35 percent','135 percent','1,435 percent'],
+       why:'A 435 percent jump in a single year.'},
+      {q:'Veritas Technologies: what share of office workers admit sharing sensitive company data over chat and collaboration tools?',
+       options:['71 percent','17 percent','41 percent','97 percent'],
+       why:'71 percent. That’s why collaboration tools belong on every security team’s watchlist.'}
+    ]
+  },
+  {
+    title:'Case files', type:'mc',
+    blurb:'Three real attacks from the book. Read the briefings closely, because every question in this round comes from them.',
+    lesson:[
+      {title:'Case 1: Company X', cards:[
+        {term:'What happened', def:'In 2023, a media company the book calls Company X was hit by a targeted spear phishing attack. Employees received convincing prompts that sent them to a fake version of the company’s intranet portal.'},
+        {term:'What the attackers took', def:'The fake portal captured logins and two-factor authentication codes. With those, the attackers got into internal systems and stole employee contact information, pieces of source code, and information about advertisers.'},
+        {term:'How it was caught', def:'One employee noticed something was wrong and alerted the security team, so the breach was spotted early. The company cut off the attackers, investigated, and urged users to turn on two-factor authentication and use a password manager.'}
+      ]},
+      {title:'Case 2: Greatness', cards:[
+        {term:'What it is', def:'A phishing-as-a-service kit used in campaigns since at least mid-2022. It targets Microsoft 365 logins at businesses, mostly in the U.S., U.K., Australia, South Africa, and Canada, especially in manufacturing, health care, and technology.'},
+        {term:'Why it fools people', def:'Its fake login page fills in the victim’s email address and shows their company’s real logo and background image, copied from the company’s actual Microsoft 365 login page.'},
+        {term:'How it steals', def:'It works as an adversary-in-the-middle, passing your login through to the real Microsoft 365 system while capturing your credentials or session cookies. That lets it get around multifactor authentication. Because it’s a rented kit, even unskilled attackers can use it.'}
+      ]},
+      {title:'Case 3: Maze ransomware', cards:[
+        {term:'What happened', def:'In summer 2020, an employee at a manufacturing company opened a phishing email with a malicious attachment. Suspicious activity followed.'},
+        {term:'Who Maze were', def:'A notorious ransomware group, now reportedly disbanded, known for going after big targets. They pioneered stealing data before locking systems, then threatening to release it to pressure victims into paying.'},
+        {term:'Dwell time', def:'How long attackers stay hidden inside a network before they’re caught. The Maze attackers had been inside for several weeks, quietly hunting for powerful accounts and sensitive information. That slow hunt gave responders time to identify them.'},
+        {term:'How it ended', def:'Responders cut off the attackers’ ability to move around the network. When the attackers finally dropped ransomware on 130 systems, security software quarantined it before it could run.'}
+      ]}
+    ],
+    qs:[
+      {q:'Company X (a media company, 2023): how did the attackers get in?',
+       options:['A fake copy of the company’s intranet login that captured passwords and two-factor codes','A virus on a USB drive left in the parking lot','Guessing weak passwords one at a time','Bribing someone in IT'],
+       why:'Convincing prompts sent employees to a lookalike intranet portal, which grabbed their logins and two-factor tokens.'},
+      {q:'What caught the Company X breach early?',
+       options:['One employee noticed something off and alerted security','An automatic antivirus scan','A customer complaint','The attackers demanded a ransom'],
+       why:'A single vigilant employee. Speaking up is a security tool.'},
+      {q:'What is “Greatness”?',
+       options:['A phishing-as-a-service kit aimed at Microsoft 365 logins','A ransomware gang','A security product that blocks phishing','A deepfake voice app'],
+       why:'Greatness is a rentable phishing kit, used since at least mid-2022, built to steal Microsoft 365 credentials. It can even get around multifactor authentication.'},
+      {q:'What made Greatness login pages so convincing?',
+       options:['Your email address was already filled in, along with your company’s real logo and background','A countdown timer','A pop-up claiming your computer was infected','Celebrity endorsements'],
+       why:'It pulled the logo and background image from the target company’s real Microsoft 365 page and prefilled the victim’s email address.'},
+      {q:'The Maze ransomware attack on a manufacturing company (2020) started how?',
+       options:['An employee opened a phishing email with a malicious attachment','A typosquatted website','A text message to the CEO','An infected office printer'],
+       why:'One opened attachment, and suspicious activity followed.'},
+      {q:'The Maze attackers lurked on the network for weeks before responders arrived. What did that long “dwell time” give the defenders?',
+       options:['Time to identify the attackers and stop the most destructive part of the attack','A legal right to the attackers’ money','Nothing, since the damage was already done','An excuse to shut the company down'],
+       why:'The attackers were slowly hunting for powerful accounts, which gave responders the chance to spot them and block the ransomware before it could run.'},
+      {q:'Old advice says spelling and grammar mistakes give phishing away. Why isn’t that enough anymore?', big:true,
+       options:['AI chatbots now write clean, personalized phishing messages','Email providers fix typos automatically','Phishing only happens by text now','Scammers hire professional editors'],
+       why:'The book’s own checklist says to watch for mistakes, and its last chapter explains why that’s fading: AI writes polished, personalized messages at scale. Judge the request, not the grammar.'}
+    ]
+  }
+];
+
+/* ============================================================
+   CHIPTUNE SOUND (Web Audio, generated live, no audio files)
+   ============================================================ */
+const Sfx = (() => {
+  let ac=null, master, sfxG, musG, noiseBuf, lastBubble=0;
+  const load=(k,d)=>{ try{ const v=localStorage.getItem(k); return v===null?d:v==='1'; }catch(e){ return d; } };
+  const save=(k,v)=>{ try{ localStorage.setItem(k,v?'1':'0'); }catch(e){} };
+  let soundOn = load('dtb-sound', true), musicOn = load('dtb-music', false), musicHeld = false;
+  const mtof = m => 440*Math.pow(2,(m-69)/12);
+
+  function init(){
+    if(ac){ if(ac.state==='suspended') ac.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    ac = new AC();
+    master = ac.createGain(); master.gain.value = 0.9; master.connect(ac.destination);
+    sfxG = ac.createGain(); sfxG.gain.value = soundOn?1:0; sfxG.connect(master);
+    musG = ac.createGain(); musG.gain.value = 0.55; musG.connect(master);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    if(musicOn && !musicHeld) Music.start();
+  }
+  function tone(f,dur,{type='square',vol=0.1,at=0,slide=null,vib=0,out=null}={}){
+    const t = ac.currentTime + Math.max(0,at);
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+    if(vib){ const l=ac.createOscillator(), lg=ac.createGain(); l.frequency.value=vib; lg.gain.value=f*0.03; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+dur+0.05); }
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.006);
+    g.gain.setValueAtTime(vol,t+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(out||sfxG); o.start(t); o.stop(t+dur+0.03);
+  }
+  function noise(dur,{vol=0.15,at=0,type='bandpass',f=1000,f2=null,q=1,out=null}={}){
+    const t = ac.currentTime + Math.max(0,at);
+    const src = ac.createBufferSource(); src.buffer = noiseBuf;
+    const fl = ac.createBiquadFilter(); fl.type=type; fl.frequency.setValueAtTime(f,t); if(f2) fl.frequency.exponentialRampToValueAtTime(f2,t+dur); fl.Q.value=q;
+    const g = ac.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    src.connect(fl); fl.connect(g); g.connect(out||sfxG); src.start(t,Math.random()*0.5); src.stop(t+dur+0.03);
+  }
+  const arp = (notes,step,opts={}) => notes.forEach((m,i)=>tone(mtof(m),opts.dur||step*0.9,{...opts,at:(opts.at||0)+i*step}));
+
+  const SOUNDS = {
+    click(){ tone(880,0.035,{vol:0.05}); },
+    page(){ tone(523,0.05,{type:'triangle',vol:0.12}); tone(784,0.07,{type:'triangle',vol:0.12,at:0.05}); },
+    start(){ arp([60,64,67,72],0.08,{vol:0.07}); tone(mtof(76),0.3,{vol:0.07,at:0.32}); tone(mtof(48),0.4,{type:'triangle',vol:0.14,at:0.32}); },
+    roundStart(){ arp([67,72,76],0.09,{vol:0.06}); tone(mtof(79),0.25,{type:'triangle',vol:0.13,at:0.27}); },
+    heal(){ arp([84,88,91,96],0.06,{type:'sine',vol:0.08,at:0.55}); },
+    bigOne(){ for(let i=0;i<3;i++){ tone(880,0.09,{vol:0.06,at:i*0.22}); tone(660,0.09,{vol:0.06,at:i*0.22+0.11}); } },
+    correct(streak=1){
+      const up = Math.min(streak-1,8)*2;
+      arp([72+up,76+up,79+up],0.06,{vol:0.07});
+      if(streak>=3) tone(mtof(84+up),0.18,{type:'triangle',vol:0.12,at:0.18});
+      if(streak>=5) arp([88+up,91+up],0.05,{type:'sine',vol:0.06,at:0.3});
+    },
+    wrongAnswer(){ tone(196,0.12,{vol:0.07}); tone(147,0.2,{vol:0.07,at:0.1}); },
+    sniff(){ tone(700,0.05,{type:'sine',vol:0.12}); tone(950,0.05,{type:'sine',vol:0.12,at:0.1}); tone(820,0.05,{type:'sine',vol:0.1,at:0.22}); },
+    dart(){ tone(300,0.25,{vol:0.05,slide:1400}); noise(0.3,{vol:0.07,type:'highpass',f:800,f2:4000}); },
+    bite(){ noise(0.09,{vol:0.3,type:'lowpass',f:900}); tone(150,0.09,{vol:0.13,slide:60}); },
+    reel(d=0.85){ const n=Math.floor(d/0.045); for(let i=0;i<n;i++) tone(1300+i*35,0.018,{vol:0.045,at:i*0.045}); tone(170,d,{type:'sawtooth',vol:0.03,slide:560}); },
+    splash(){ noise(0.42,{vol:0.22,type:'bandpass',f:1700,f2:280,q:0.8}); noise(0.14,{vol:0.1,type:'highpass',f:3200,at:0.02}); },
+    loseFin(){ arp([67,64,60],0.12,{vol:0.07}); tone(mtof(55),0.35,{type:'triangle',vol:0.14,at:0.36,vib:8}); },
+    reeledIn(){ arp([67,63,60,55],0.14,{vol:0.07}); tone(mtof(48),0.6,{type:'triangle',vol:0.15,at:0.56,vib:6}); },
+    plop(){ tone(700,0.13,{type:'sine',vol:0.16,slide:150}); },
+    dizzy(){ tone(520,0.55,{type:'sine',vol:0.06,vib:11}); tone(390,0.55,{type:'sine',vol:0.04,vib:9,at:0.1}); },
+    nibble(n=0){ const sc=[72,74,76,79,81]; tone(mtof(sc[n%5]),0.09,{vol:0.07}); tone(mtof(sc[n%5]+12),0.07,{type:'sine',vol:0.06,at:0.06}); for(let i=0;i<3;i++) tone(1200+i*250,0.03,{type:'sine',vol:0.03,at:0.12+i*0.05,slide:2200}); },
+    buzz(){ tone(110,0.24,{vol:0.07}); tone(117,0.24,{vol:0.07}); },
+    mapped(){ arp([72,76,79,84,79,84],0.08,{vol:0.06}); tone(mtof(48),0.5,{type:'triangle',vol:0.14,at:0.4}); },
+    jump(){ tone(260,0.24,{vol:0.045,slide:950}); },
+    bubble(){ tone(1100+Math.random()*500,0.04,{type:'sine',vol:0.025,slide:2300}); },
+    open(){ arp([79,84],0.05,{type:'triangle',vol:0.1}); },
+    fanfare(){
+      [[72,0,.11],[72,.13,.11],[72,.26,.11],[76,.42,.28],[74,.74,.13],[76,.9,.13],[79,1.06,.6]].forEach(([m,a,d])=>tone(mtof(m),d,{vol:0.08,at:a}));
+      [[48,0,.36],[53,.42,.3],[55,.74,.3],[48,1.06,.6]].forEach(([m,a,d])=>tone(mtof(m),d,{type:'triangle',vol:0.16,at:a}));
+      arp([84,88,91,96],0.05,{type:'sine',vol:0.05,at:1.1});
+    },
+    gameOver(){ [64,63,62].forEach((m,i)=>tone(mtof(m),0.38,{type:'triangle',vol:0.14,at:i*0.42,vib:5})); tone(mtof(61),1.1,{type:'triangle',vol:0.14,at:1.26,vib:6}); }
+  };
+
+  /* Background music: an original 8-bar loop (C-Am-F-G), 112 bpm */
+  const MEL = [72,0,76,0,79,0,76,74, 72,0,69,0,72,74,76,0, 77,0,76,0,74,0,72,0, 74,0,71,0,67,0,0,0,
+               72,0,76,0,79,0,81,0, 79,0,76,0,72,0,74,76, 77,0,81,0,79,0,77,76, 74,0,0,71,72,0,0,0];
+  const ROOTS = [48,45,41,43];
+  const Music = {
+    timer:null, step:0, next:0,
+    start(){ if(!ac || this.timer) return; this.step=0; this.next=ac.currentTime+0.12; this.timer=setInterval(()=>this.tick(),50); },
+    stop(){ clearInterval(this.timer); this.timer=null; },
+    tick(){
+      const spb = 60/112/2;
+      while(this.next < ac.currentTime+0.25){ this.play(this.step,this.next-ac.currentTime); this.step=(this.step+1)%64; this.next+=spb; }
+    },
+    play(s,at){
+      const m = MEL[s]; if(m) tone(mtof(m),0.17,{vol:0.03,at,out:musG});
+      if(s%2===0){ const root=ROOTS[Math.floor(s/8)%4]; const q=(s%8)/2; tone(mtof(q%2?root+7:root),0.22,{type:'triangle',vol:0.1,at,out:musG}); }
+      else noise(0.03,{vol:0.018,type:'highpass',f:7000,at,out:musG});
+    }
+  };
+
+  return {
+    init,
+    play(name,...args){
+      if(!ac || !soundOn || ac.state!=='running') return;
+      if(name==='bubble'){ const t=performance.now(); if(t-lastBubble<160) return; lastBubble=t; }
+      try{ SOUNDS[name](...args); }catch(e){ console.warn('sound '+name+': '+e.message); }
+    },
+    get sound(){ return soundOn; }, get music(){ return musicOn; },
+    setSound(v){ soundOn=v; save('dtb-sound',v); if(sfxG) sfxG.gain.value = v?1:0; },
+    setMusic(v){ musicOn=v; save('dtb-music',v); init(); if(!ac) return; if(v && !musicHeld) Music.start(); else Music.stop(); },
+    holdMusic(){ musicHeld=true; Music.stop(); },
+    releaseMusic(){ musicHeld=false; if(ac && musicOn) Music.start(); }
+  };
+})();
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,Sfx.init,{passive:true}));
+
+/* ============================================================
+   PIXEL SCENE (240 x 120, Sweetie 16 palette)
+   ============================================================ */
+const Scene = (() => {
+  const cv = document.getElementById('scene');
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const W = 240, H = 120, SURF = 34, FLOOR = 106, HX = 124, HOOK_HOME = 64;
+  const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const popsEl = document.getElementById('pops');
+
+  const PAL = {K:'#1a1c2c',O:'#ef7d57',R:'#b13e53',Y:'#ffcd75',W:'#f4f4f4',S:'#94b0c2'};
+  function sprite(rows){
+    const c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length;
+    const x = c.getContext('2d');
+    rows.forEach((r,y)=>[...r].forEach((ch,xx)=>{ if(PAL[ch]){ x.fillStyle = PAL[ch]; x.fillRect(xx,y,1,1); } }));
+    return c;
+  }
+  const FISH_A = sprite([
+    '......KKKKK.....',
+    '....KKOOOOOKK...',
+    'K..KOOOOOOOWKK..',
+    'KKKOOROOOOOWKOK.',
+    'KOKOROOOOOOOOOOK',
+    'KKKOOROOOOOYYOK.',
+    'K..KOYYYYYYYKK..',
+    '....KKYYYYYKK...',
+    '......KKKKK.....'
+  ]);
+  const FISH_B = sprite([
+    '......KKKKK.....',
+    '....KKOOOOOKK...',
+    '...KOOOOOOOWKK..',
+    '.KKOOROOOOOWKOK.',
+    'KOKOROOOOOOOOOOK',
+    '.KKOOROOOOOYYOK.',
+    '...KOYYYYYYYKK..',
+    '....KKYYYYYKK...',
+    '......KKKKK.....'
+  ]);
+  const BOBBER = sprite(['..K..','.KRK.','KRRRK','KWWWK','.KWK.','..K..']);
+  const HOOK = sprite(['..S','..S','..S','S.S','S.S','.S.']);
+
+  /* ---------- static background ---------- */
+  const bg = document.createElement('canvas'); bg.width = W; bg.height = H;
+  (function paint(c){
+    const px = (col,x,y,w=1,h=1)=>{ c.fillStyle = col; c.fillRect(x,y,w,h); };
+    const band = (y0,y1,col)=>px(col,0,y0,W,y1-y0);
+    const dither = (y0,y1,a,b)=>{ for(let y=y0;y<y1;y++) for(let x=0;x<W;x++) px(((x+y)%2)?a:b,x,y); };
+    band(0,13,'#41a6f6'); dither(13,17,'#41a6f6','#73eff7'); band(17,SURF,'#73eff7');
+    for(let dy=-6;dy<=6;dy++) for(let dx=-6;dx<=6;dx++){ const d=dx*dx+dy*dy; if(d<=36) px(d>24?'#ef7d57':'#ffcd75',214+dx,11+dy); }
+    [[28,9,16,3],[32,7,8,2],[148,13,20,3],[153,11,9,2],[72,4,10,2]].forEach(r=>px('#f4f4f4',...r));
+    for(let x=0;x<W;x++){
+      const t1 = 25 + Math.round(Math.sin(x/19)*3 + Math.sin(x/7+1)*1.2);
+      px('#257179',x,t1,1,SURF-t1);
+      const t2 = 29 + Math.round(Math.sin(x/11+2)*2);
+      px('#38b764',x,t2,1,SURF-t2);
+    }
+    band(SURF,58,'#3b5dc9'); dither(58,62,'#3b5dc9','#29366f');
+    band(62,84,'#29366f'); dither(84,88,'#29366f','#1a1c2c');
+    band(88,FLOOR,'#1a1c2c');
+    band(FLOOR,H,'#333c57');
+    for(let i=0;i<90;i++) px('#566c86',(i*37)%W,FLOOR+1+((i*13)%13));
+    for(let x=0;x<W;x+=3) if((x*7)%5===0) px('#566c86',x,FLOOR-1,2,1);
+    [[38,102,10,4],[41,100,5,2],[168,103,12,3],[171,101,6,2],[96,104,6,2]].forEach(r=>px('#566c86',...r));
+    [[41,100,3,1],[171,101,4,1],[39,102,2,1]].forEach(r=>px('#94b0c2',...r));
+  })(bg.getContext('2d'));
+
+  const weedsBack = [{x:14,h:32},{x:22,h:20},{x:58,h:16},{x:202,h:26},{x:229,h:36}];
+  const weedsFront = [{x:6,h:22},{x:236,h:18}];
+  const bgFish = [{x:40,y:96,s:0.006},{x:170,y:46,s:0.009},{x:110,y:100,s:0.004},{x:215,y:90,s:0.007}];
+
+  /* ---------- state ---------- */
+  const fish = {x:192,y:76,face:-1,hang:false,flip:false,visible:true};
+  let mode='idle', t0=0, sx=0, sy=0, flags={}, finalCatch=false;
+  let hookY=HOOK_HOME, worm=true, rodBend=0, bobDip=0;
+  let bubbles=[], drops=[], now=performance.now(), last=now;
+
+  const clamp01 = t => t<0?0:t>1?1:t;
+  const ease = t => { t=clamp01(t); return t*t*(3-2*t); };
+  const lerp = (a,b,t) => a+(b-a)*t;
+  const rand = (a,b) => a+Math.random()*(b-a);
+
+  function set(m){ mode=m; t0=performance.now(); sx=fish.x; sy=fish.y; flags={}; }
+  function pop(text,x,y,cls=''){
+    const d=document.createElement('div'); d.className='pop '+cls; d.textContent=text;
+    d.style.left=(x/W*100)+'%'; d.style.top=(y/H*100)+'%';
+    popsEl.appendChild(d); setTimeout(()=>d.remove(),1400);
+  }
+  function bubble(x,y){ bubbles.push({x,y,vy:-(0.012+Math.random()*0.014),ph:Math.random()*6,s:Math.random()<0.35?2:1}); }
+  function splash(x){
+    Sfx.play('splash');
+    for(let i=0;i<14;i++) drops.push({x:x+rand(-4,4),y:SURF-1,vx:rand(-0.05,0.05),vy:rand(-0.13,-0.05),c:Math.random()<0.5?'#f4f4f4':'#73eff7'});
+  }
+  const mouthX = () => fish.face>0 ? fish.x+8 : fish.x-8;
+
+  /* ---------- update ---------- */
+  function update(dt){
+    const e = now - t0;
+    switch(mode){
+      case 'idle':
+        fish.hang=false; fish.visible=true;
+        if(!RM){
+          fish.x += fish.face*0.018*dt;
+          if(fish.x>222) fish.face=-1;
+          if(fish.x<148) fish.face=1;
+          fish.y = 76 + Math.sin(now/700)*3;
+          if(Math.random()<dt*0.0008) bubble(mouthX(),fish.y-1);
+        }
+        break;
+
+      case 'dodge': {
+        const tx=HX+12, ty=hookY+7;
+        if(e<700){ const k=ease(e/700); fish.face = tx<sx?-1:1; fish.x=lerp(sx,tx,k); fish.y=lerp(sy,ty,k); }
+        else if(e<1100){
+          fish.face=-1; fish.x=tx+((Math.floor(e/90)%2)?1:0); fish.y=ty;
+          if(!flags.q){ flags.q=1; pop('?',tx-6,ty-12,'q'); Sfx.play('sniff'); }
+        }
+        else if(e<1800){
+          const k=(e-1100)/700; fish.face=1;
+          fish.x=lerp(tx,218,1-Math.pow(1-k,3)); fish.y=lerp(ty,76,k);
+          if(!flags.p){ flags.p=1; pop(flags.label||'',tx+16,ty-12); Sfx.play('dart'); }
+          if(Math.random()<0.6) bubble(fish.x-9,fish.y+rand(-2,2));
+        }
+        else set('idle');
+        break;
+      }
+
+      case 'caught': {
+        const bx=HX+7;
+        if(e<550){ const k=ease(e/550); fish.face=-1; fish.x=lerp(sx,bx,k); fish.y=lerp(sy,hookY+7,k); }
+        else if(e<800){
+          if(!flags.bite){ flags.bite=1; worm=false; bobDip=3; rodBend=2; Sfx.play('bite'); }
+          fish.face=-1; fish.x=bx+((Math.floor(e/60)%2)?1:-1); fish.y=hookY+7;
+        }
+        else if(e<1650){
+          if(!flags.reel){ flags.reel=1; Sfx.play('reel',0.85); }
+          const k=ease((e-800)/850); hookY=lerp(HOOK_HOME,8,k); rodBend=3;
+          fish.hang=true; fish.flip=Math.floor(e/90)%2===1; fish.x=HX-1; fish.y=hookY+14;
+          if(!flags.splash && fish.y+8<SURF){ flags.splash=1; splash(HX); }
+          if(!flags.pop && e>1100){ flags.pop=1; pop(finalCatch?'REELED IN!':'-1 FIN',HX+34,16,'bad'); Sfx.play(finalCatch?'reeledIn':'loseFin'); }
+        }
+        else if(e<2150){
+          hookY=8+Math.round(Math.sin(e/80)); rodBend=3;
+          fish.hang=true; fish.flip=Math.floor(e/70)%2===1; fish.x=HX-1; fish.y=hookY+14;
+        }
+        else if(finalCatch){
+          if(e<2750){ if(!flags.r2){ flags.r2=1; Sfx.play('reel',0.6); } const k=ease((e-2150)/600); hookY=lerp(8,-40,k); fish.x=HX-1; fish.y=hookY+14; fish.flip=Math.floor(e/70)%2===1; }
+          else if(e<3650){ fish.visible=false; fish.hang=false; rodBend=0; hookY=lerp(-10,HOOK_HOME,ease((e-2750)/900)); }
+          else { hookY=HOOK_HOME; worm=true; mode='empty'; }
+        }
+        else {
+          hookY = lerp(8,HOOK_HOME,ease((e-2150)/800));
+          rodBend = Math.max(0,rodBend-0.01*dt);
+          if(e<2650){
+            const k=(e-2150)/500; fish.hang=false; fish.face=1;
+            fish.x=HX-1+k*14; fish.y=lerp(22,62,k*k);
+            if(!flags.s2 && fish.y>SURF){ flags.s2=1; splash(fish.x); Sfx.play('plop'); }
+          }
+          else if(e<3400){
+            const k=ease((e-2650)/750); fish.face=1;
+            fish.x=lerp(HX+13,194,k); fish.y=lerp(62,76,k)+Math.sin(e/45)*2;
+            if(!flags.dz){ flags.dz=1; Sfx.play('dizzy'); }
+            if(!flags.w && e>2950){ flags.w=1; worm=true; }
+          }
+          else { hookY=HOOK_HOME; worm=true; rodBend=0; set('idle'); }
+        }
+        break;
+      }
+
+      case 'nibble':
+        if(e<400){ fish.y = sy - Math.sin(e/400*Math.PI)*7; if(!flags.b){ flags.b=1; for(let i=0;i<6;i++) bubble(mouthX()+rand(-2,2),fish.y-rand(0,4)); pop(flags.label||'',fish.x,fish.y-14); } }
+        else set('idle');
+        break;
+
+      case 'shake':
+        if(e<420){ fish.x = sx + ((Math.floor(e/55)%2)?2:-2); if(!flags.b){ flags.b=1; pop(flags.label||'',fish.x,fish.y-14,'bad'); } }
+        else { fish.x=sx; set('idle'); }
+        break;
+
+      case 'celebrate': {
+        const p=(e%2600)/2600; fish.hang=false; fish.visible=true;
+        if(p<0.5){
+          const cyc=Math.floor(e/2600); if(flags.cyc!==cyc){ flags.cyc=cyc; Sfx.play('jump'); }
+          const k=p/0.5; fish.face=1; fish.x=lerp(150,204,k); fish.y=80-Math.sin(k*Math.PI)*72;
+          const above = fish.y<SURF;
+          if(flags.above!==undefined && above!==flags.above) splash(fish.x);
+          flags.above=above;
+        } else {
+          const k=(p-0.5)/0.5; fish.face=-1; fish.x=lerp(204,150,k); fish.y=80+Math.sin(k*Math.PI*2)*2;
+          flags.above=false;
+          if(Math.random()<0.15) bubble(mouthX(),fish.y);
+        }
+        break;
+      }
+      case 'empty': fish.visible=false; break;
+    }
+
+    bobDip = Math.max(0,bobDip-dt*0.004);
+    if(!RM && Math.random()<dt*0.0005){ const w=weedsBack[Math.floor(Math.random()*weedsBack.length)]; bubble(w.x+1,FLOOR-2); }
+    bubbles = bubbles.filter(b=>{ b.y+=b.vy*dt; b.ph+=dt*0.006; if(b.y<=SURF+1){ if(Math.random()<0.35) Sfx.play('bubble'); return false; } return true; });
+    drops = drops.filter(d=>{ d.vy+=0.0004*dt; d.x+=d.vx*dt; d.y+=d.vy*dt; return !(d.y>SURF+1 && d.vy>0); });
+    if(!RM) bgFish.forEach(f=>{ f.x-=f.s*dt; if(f.x<-8) f.x=W+8; });
+  }
+
+  /* ---------- render ---------- */
+  function px(col,x,y,w=1,h=1){ ctx.fillStyle=col; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+  function bres(x0,y0,x1,y1,col){
+    x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
+    const dx=Math.abs(x1-x0), dy=-Math.abs(y1-y0), sx_=x0<x1?1:-1, sy_=y0<y1?1:-1; let err=dx+dy;
+    for(;;){ px(col,x0,y0); if(x0===x1&&y0===y1) break; const e2=2*err; if(e2>=dy){err+=dy;x0+=sx_;} if(e2<=dx){err+=dx;y0+=sy_;} }
+  }
+  function weed(w){
+    for(let i=0;i<w.h;i++){
+      const sway = RM?0:Math.round(Math.sin(now/650+i*0.25+w.x)*(i/w.h)*2.5);
+      px(i%4<2?'#38b764':'#257179',w.x+sway,FLOOR-1-i,2,1);
+      if(i%6===3) px('#38b764',w.x+sway+((i%12===3)?2:-1),FLOOR-1-i,1,1);
+    }
+  }
+  function drawFish(){
+    if(!fish.visible) return;
+    const still = RM && mode==='idle';
+    const img = still ? FISH_A : ((Math.floor(now/(mode==='idle'?180:85))%2)?FISH_A:FISH_B);
+    ctx.save(); ctx.translate(Math.round(fish.x),Math.round(fish.y));
+    if(fish.hang){ if(fish.flip) ctx.scale(-1,1); ctx.rotate(-Math.PI/2); }
+    else if(fish.face<0) ctx.scale(-1,1);
+    ctx.drawImage(img,-8,-4); ctx.restore();
+  }
+  function render(){
+    ctx.drawImage(bg,0,0);
+    // light rays
+    ctx.globalAlpha=0.08;
+    for(let k=0;k<3;k++){
+      const base = ((RM?0:now*0.004)+k*90)%320-60;
+      for(let y=SURF+1;y<FLOOR;y++) px('#73eff7',base+(y-SURF)*0.45,y,6,1);
+    }
+    ctx.globalAlpha=1;
+    bgFish.forEach(f=>{ px('#566c86',f.x,f.y,4,2); px('#566c86',f.x+4,f.y-1,1,1); px('#566c86',f.x+4,f.y+2,1,1); });
+    weedsBack.forEach(weed);
+    // surface
+    px('#73eff7',0,SURF,W,1);
+    const off = RM?0:Math.floor(now/120);
+    for(let x=0;x<W;x++){ if(((x+off)%14)<2) px('#f4f4f4',x,SURF); if(((x-off+5)%19)<3) px('#41a6f6',x,SURF+1); }
+    // boat + angler
+    const bo = RM?0:Math.round(Math.sin(now/520));
+    for(let r=0;r<7;r++) px(r===0?'#ef7d57':'#5d275d',66+r,30+r+bo,40-2*r,1);
+    px('#3b5dc9',88,23+bo,4,7);
+    px('#ffcd75',89,20+bo,3,3);
+    px('#b13e53',87,19+bo,6,1); px('#b13e53',88,18+bo,4,1);
+    const tipY = 4+Math.round(rodBend);
+    bres(92,25+bo,HX,tipY,'#1a1c2c');
+    // line + bobber + hook
+    const showBob = hookY > SURF-2;
+    const bTop = SURF-3 + (RM?0:Math.round(Math.sin(now/400)*0.8)) + Math.round(bobDip);
+    ctx.globalAlpha=0.85;
+    if(showBob){ px('#f4f4f4',HX,tipY+1,1,Math.max(0,bTop-tipY-1)); px('#f4f4f4',HX,bTop+6,1,Math.max(0,Math.round(hookY)-bTop-6)); }
+    else px('#f4f4f4',HX,tipY+1,1,Math.max(0,Math.round(hookY)-tipY-1));
+    ctx.globalAlpha=1;
+    if(showBob) ctx.drawImage(BOBBER,HX-2,bTop);
+    const hy=Math.round(hookY);
+    ctx.drawImage(HOOK,HX-2,hy);
+    if(worm){
+      const f = RM?0:Math.floor(now/260)%2;
+      const pts = f?[[-1,6],[0,7],[-1,8],[0,9],[1,10]]:[[-1,6],[-2,7],[-1,8],[-2,9],[-3,10]];
+      pts.forEach(([dx,dy],i)=>px(i===0?'#ef7d57':'#b13e53',HX+dx,hy+dy));
+    }
+    drawFish();
+    bubbles.forEach(b=>{
+      const x = b.x + Math.round(Math.sin(b.ph)*0.8);
+      if(b.s===1) px('#73eff7',x,b.y);
+      else { px('#73eff7',x,b.y,2,2); px('#f4f4f4',x,b.y); }
+    });
+    drops.forEach(d=>px(d.c,d.x,d.y));
+    weedsFront.forEach(weed);
+  }
+
+  function settle(){ hookY=HOOK_HOME; worm=true; rodBend=0; fish.hang=false; fish.visible=true; if(fish.y<SURF+8){ fish.y=76; fish.x=194; } }
+  function loop(ts){ const dt=Math.min(50,ts-last); last=ts; now=ts; update(dt); render(); requestAnimationFrame(loop); }
+  requestAnimationFrame(t=>{ last=t; now=t; requestAnimationFrame(loop); });
+
+  return {
+    finIcon: FISH_A.toDataURL(),
+    reset(){ popsEl.innerHTML=''; fish.visible=true; fish.hang=false; fish.x=192; fish.y=76; fish.face=-1; hookY=HOOK_HOME; worm=true; rodBend=0; finalCatch=false; set('idle'); },
+    dodge(label){ if(mode==='empty') return; settle(); set('dodge'); flags.label=label; },
+    caught(isFinal){ finalCatch=isFinal; worm=true; hookY=HOOK_HOME; set('caught'); },
+    nibble(label){ settle(); set('nibble'); flags.label=label; },
+    shake(label){ settle(); set('shake'); flags.label=label; },
+    celebrate(){ hookY=HOOK_HOME; worm=true; rodBend=0; fish.visible=true; set('celebrate'); }
+  };
+})();
+
+/* ============================================================
+   GAME
+   ============================================================ */
+const MAX_FINS = 5;
+let S;
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const guideBtn = $('#guideBtn');
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+function reset(){ S = {round:0,qi:0,fins:MAX_FINS,score:0,streak:0,correct:0,total:0,orderMistakes:0,orderFilled:[],queue:[],answered:false,over:false}; }
+
+function updateHUD(){
+  $('#fins').innerHTML = Array.from({length:MAX_FINS},(_,i)=>`<img src="${Scene.finIcon}" alt="" class="${i>=S.fins?'lost':''}">`).join('');
+  $('#fins').setAttribute('aria-label', `${S.fins} of ${MAX_FINS} fins left`);
+  $('#score').textContent = `${S.score} pts`;
+  $('#tracker').innerHTML = ROUNDS.map((r,i)=>`<li class="${i<S.round||S.over&&i<=S.round&&S.fins>0?'done':(i===S.round&&!S.over?'now':'')}" title="${r.title}"></li>`).join('');
+}
+function lockGuide(on){ guideBtn.disabled = on; guideBtn.title = on ? 'Answer the current question first' : ''; }
+function toStage(){ const r=stage.getBoundingClientRect(); if(r.top<0) stage.scrollIntoView({block:'start'}); }
+
+function lessonHTML(pg, tag='h2'){
+  let h = `<${tag}>${pg.title}</${tag}>`;
+  if(pg.intro) h += `<p>${pg.intro}</p>`;
+  if(pg.steps) h += `<ol class="stages">${pg.steps.map(s=>`<li><p class="term">${s.term}</p><p>${s.def}</p></li>`).join('')}</ol>`;
+  if(pg.cards) h += pg.cards.map(c=>`<div class="lcard"><p class="term">${c.term}</p><p>${c.def}</p>${c.spot?`<p class="spot"><b>Spot it:</b> ${c.spot}</p>`:''}</div>`).join('');
+  if(pg.note) h += `<p class="note">${pg.note}</p>`;
+  return h;
+}
+
+/* Field guide dialog */
+const guide = $('#guide');
+$('#guideBody').innerHTML = ROUNDS.map((r,i)=>`<section><p class="round-label">Round ${i+1}: ${r.title}</p>${r.lesson.map(p=>lessonHTML(p,'h3')).join('')}</section>`).join('');
+guideBtn.onclick = () => { Sfx.play('open'); guide.showModal(); };
+
+/* Sound and music toggles */
+const sndBtn = $('#sndBtn'), musBtn = $('#musBtn');
+function paintToggles(){
+  sndBtn.textContent = Sfx.sound ? 'Sound on' : 'Sound off'; sndBtn.setAttribute('aria-pressed', Sfx.sound);
+  musBtn.textContent = Sfx.music ? 'Music on' : 'Music off'; musBtn.setAttribute('aria-pressed', Sfx.music);
+}
+sndBtn.onclick = () => { Sfx.setSound(!Sfx.sound); paintToggles(); Sfx.play('click'); };
+musBtn.onclick = () => { Sfx.setMusic(!Sfx.music); paintToggles(); };
+paintToggles();
+document.addEventListener('click', e => { if(e.target.closest('.go')) Sfx.play('click'); });
+$('#guideClose').onclick = () => guide.close();
+
+function intro(){
+  reset(); Scene.reset(); updateHUD(); lockGuide(false); Sfx.releaseMusic();
+  stage.innerHTML = `
+    <h2>You’re the fish.</h2>
+    <p>Every question is a lure. Pick the right answer and you swim free. Pick wrong and you get hooked.</p>
+    <ul class="rules">
+      <li>Each round opens with a short field guide. Read it: the questions come from it.</li>
+      <li>You start with ${MAX_FINS} fins. Each wrong answer costs one. Lose them all and you’re dinner.</li>
+      <li>Each new round heals one fin, and correct answers in a row build a streak bonus.</li>
+      <li>Five rounds, about fifteen minutes.</li>
+    </ul>
+    <div class="btnrow"><button class="go" id="start">Start swimming</button></div>
+    ${sourcesHTML()}`;
+  $('#start').onclick = () => { Sfx.play('start'); roundIntro(); };
+}
+
+function roundIntro(){
+  const r = ROUNDS[S.round];
+  let healed = '';
+  if(S.round>0 && S.fins<MAX_FINS){ S.fins++; healed = `<p class="muted">You healed a fin.</p>`; Sfx.play('heal'); }
+  updateHUD(); lockGuide(false); Sfx.play('roundStart');
+  stage.innerHTML = `
+    <p class="round-label">Round ${S.round+1} of ${ROUNDS.length}</p>
+    <h2>${r.title}</h2>
+    <p>${r.blurb}</p>${healed}
+    <div class="btnrow">
+      <button class="go" id="read">Read the field guide (${r.lesson.length} page${r.lesson.length>1?'s':''})</button>
+      <button class="go ghost" id="skip">Skip to the round</button>
+    </div>`;
+  $('#read').onclick = () => lesson(0);
+  $('#skip').onclick = startRound;
+  $('#read').focus(); toStage();
+}
+
+function lesson(p){
+  const r = ROUNDS[S.round], L = r.lesson;
+  stage.innerHTML = `
+    <p class="round-label">Field guide: ${r.title}, page ${p+1} of ${L.length}</p>
+    ${lessonHTML(L[p])}
+    <div class="btnrow">
+      ${p>0?'<button class="go ghost" id="back">Back</button>':''}
+      <button class="go" id="fwd">${p<L.length-1?'Next page':'Start the round'}</button>
+    </div>`;
+  Sfx.play('page');
+  if(p>0) $('#back').onclick = () => lesson(p-1);
+  $('#fwd').onclick = () => p<L.length-1 ? lesson(p+1) : startRound();
+  stage.querySelector('h2').setAttribute('tabindex','-1'); stage.querySelector('h2').focus({preventScroll:true});
+  toStage();
+}
+
+function startRound(){
+  const r = ROUNDS[S.round];
+  S.qi = 0;
+  if(r.type==='order') return orderRound();
+  S.queue = r.binary ? shuffle(r.qs) : r.qs;
+  question();
+}
+
+function question(){
+  const r = ROUNDS[S.round], item = S.queue[S.qi];
+  const correct = r.binary ? item.answer : item.options[0];
+  const opts = r.binary ? ['Safe move','Takes the bait'] : shuffle(item.options);
+  S.answered = false; lockGuide(true);
+  stage.innerHTML = `
+    <p class="round-label">${r.title}: ${S.qi+1} of ${S.queue.length}</p>
+    ${item.big?'<span class="big-tag">The big one: double points</span>':''}
+    <p class="q">${item.q}</p>
+    <div class="opts ${r.binary?'two':''}">${opts.map(o=>`<button class="opt">${o}</button>`).join('')}</div>
+    <div class="feedback" id="fb"></div>
+    <div id="nextWrap"></div>`;
+  toStage();
+  if(item.big) Sfx.play('bigOne');
+  stage.querySelectorAll('.opt').forEach(b=>{
+    b.onclick = () => {
+      if(S.answered) return; S.answered = true; S.total++; lockGuide(false);
+      const ok = b.textContent === correct;
+      stage.querySelectorAll('.opt').forEach(x=>{
+        x.disabled = true;
+        if(x.textContent===correct) x.classList.add('right');
+        else if(x===b) x.classList.add('wrong'); else x.classList.add('dim');
+      });
+      let head;
+      if(ok){
+        S.correct++; S.streak++;
+        let pts = 100 + Math.min(S.streak-1,5)*20; if(item.big) pts*=2;
+        S.score += pts;
+        head = S.streak>=3 ? `Swam free. ${S.streak} in a row, +${pts}.` : `Swam free. +${pts}.`;
+        Scene.dodge(`+${pts}`); Sfx.play('correct', S.streak);
+      } else {
+        S.streak = 0; S.fins--;
+        head = S.fins>0 ? 'Hooked! You wriggled loose but lost a fin.' : 'Hooked! That was your last fin.';
+        Scene.caught(S.fins<=0); Sfx.play('wrongAnswer');
+      }
+      updateHUD();
+      const fb = $('#fb'); fb.className = `feedback show ${ok?'good':'bad'}`;
+      fb.innerHTML = `<strong>${head}</strong>${ok?'':`The answer: ${correct}. `}${item.why}`;
+      const last = S.qi === S.queue.length-1;
+      const label = S.fins<=0 ? 'See what happened' : last ? (S.round===ROUNDS.length-1?'See your results':'Finish round') : 'Next lure';
+      $('#nextWrap').innerHTML = `<div class="btnrow"><button class="go" id="next">${label}</button></div>`;
+      $('#next').onclick = () => {
+        if(S.fins<=0) return gameOver();
+        if(last){ S.round++; S.round>=ROUNDS.length ? results() : roundIntro(); }
+        else { S.qi++; question(); }
+      };
+      $('#next').focus({preventScroll:true});
+    };
+  });
+}
+
+function orderRound(){
+  const r = ROUNDS[S.round];
+  S.orderFilled = []; lockGuide(true);
+  const pool = shuffle(r.stages.map((s,i)=>({...s,i})));
+  const draw = (msg='', bad=false) => {
+    stage.innerHTML = `
+      <p class="round-label">${r.title}</p>
+      <p class="q">Tap the stage that comes next.</p>
+      <ol class="slots">${r.stages.map((s,i)=> i<S.orderFilled.length ? `<li class="filled">${s.name}<span>${s.desc}</span></li>` : '<li></li>').join('')}</ol>
+      <div class="pool">${pool.filter(p=>!S.orderFilled.includes(p.i)).map(p=>`<button class="opt" data-i="${p.i}">${p.name}</button>`).join('')}</div>
+      <div class="feedback ${msg?'show '+(bad?'bad':'good'):''}" id="fb">${msg}</div>
+      <div id="nextWrap"></div>`;
+    stage.querySelectorAll('.pool .opt').forEach(b=>{
+      b.onclick = () => {
+        const i = +b.dataset.i;
+        if(i === S.orderFilled.length){
+          S.orderFilled.push(i); S.score += 60; Scene.nibble('+60'); Sfx.play('nibble', S.orderFilled.length-1); updateHUD();
+          if(S.orderFilled.length === r.stages.length){
+            S.round++; lockGuide(false); Sfx.play('mapped');
+            draw(`<strong>Full attack mapped.</strong>${S.orderMistakes ? `You made ${S.orderMistakes} wrong tap${S.orderMistakes>1?'s':''} along the way.` : 'Not a single wrong tap.'} Notice where most attacks start: with what you post publicly.`);
+            $('#nextWrap').innerHTML = '<div class="btnrow"><button class="go" id="next">Finish round</button></div>';
+            $('#next').onclick = roundIntro; $('#next').focus({preventScroll:true});
+          } else {
+            draw(); const nb = stage.querySelector('.pool .opt'); if(nb) nb.focus({preventScroll:true});
+          }
+        } else {
+          S.orderMistakes++; S.score = Math.max(0,S.score-25); Scene.shake('-25'); Sfx.play('buzz'); updateHUD();
+          draw('<strong>Not yet, −25.</strong>Ask yourself what the attacker needs before they can do that.', true);
+          const again = stage.querySelector(`.pool .opt[data-i="${i}"]`);
+          if(again){ again.classList.add('shake'); again.focus({preventScroll:true}); }
+        }
+      };
+    });
+  };
+  draw();
+}
+
+function accuracy(){
+  const reachedOrder = S.round > 1;
+  const orderPts = reachedOrder ? Math.max(0,5-Math.min(S.orderMistakes,5)) : 0;
+  const denom = S.total + (reachedOrder?5:0);
+  return denom ? Math.round(((S.correct + orderPts)/denom)*100) : 0;
+}
+function rank(p){
+  if(p>=90) return ['Old Pike','You’ve seen every lure in the lake and bitten none of them.'];
+  if(p>=75) return ['Wary Trout','You nosed a couple of lures, but you know a hook when you see one.'];
+  if(p>=55) return ['Curious Perch','You spot the obvious bait. The clever stuff still gets close.'];
+  return ['Fresh Minnow','Everything looks tasty right now. Play again and the hooks get easier to see.'];
+}
+
+function results(){
+  S.over = true; S.round = ROUNDS.length-1; updateHUD(); lockGuide(false); Scene.celebrate(); Sfx.play('fanfare');
+  const p = accuracy(); const [title, line] = rank(p);
+  stage.innerHTML = `
+    <h2>You made it out of the lake.</h2>
+    <p>Type your name, then take a screenshot of your card to turn in.</p>
+    <label for="nm">Your name</label>
+    <input type="text" id="nm" autocomplete="name">
+    <div class="card">
+      <p class="muted" style="margin:0">Don’t Take the Bait: completion card</p>
+      <p class="rank">${title}</p>
+      <p style="margin:0">${line}</p>
+      <dl>
+        <dt>Name</dt><dd id="cardName">—</dd>
+        <dt>Score</dt><dd>${S.score} pts</dd>
+        <dt>Accuracy</dt><dd>${p}%</dd>
+        <dt>Fins left</dt><dd>${S.fins} of ${MAX_FINS}</dd>
+        <dt>Date</dt><dd>${new Date().toLocaleDateString()}</dd>
+      </dl>
+    </div>
+    <div class="btnrow"><button class="go" id="again">Play again</button></div>
+    ${sourcesHTML()}`;
+  $('#nm').oninput = e => { $('#cardName').textContent = e.target.value.trim() || '—'; };
+  $('#again').onclick = intro;
+  $('#nm').focus({preventScroll:true}); toStage();
+}
+
+function gameOver(){
+  S.over = true; updateHUD(); lockGuide(false); Sfx.holdMusic(); Sfx.play('gameOver');
+  stage.innerHTML = `
+    <h2>Reeled in.</h2>
+    <p>You ran out of fins in round ${S.round+1}, “${ROUNDS[S.round].title}.” You scored ${S.score} points and answered ${S.correct} of ${S.total} lures correctly.</p>
+    <p>That’s the point of practice: getting hooked here costs nothing. Getting hooked in your inbox costs a lot more. Open the field guide to review before you try again.</p>
+    <div class="btnrow"><button class="go" id="again">Try again</button><button class="go ghost" id="review">Open field guide</button></div>`;
+  $('#again').onclick = intro;
+  $('#review').onclick = () => { Sfx.play('open'); guide.showModal(); };
+  $('#again').focus({preventScroll:true}); toStage();
+}
+
+function sourcesHTML(){
+  return `<details><summary>Where this comes from</summary>
+    <p>Every lesson and question in this game is based on:</p>
+    <p class="ref">Bridgers, G., Hausman, C., Tomeo, A., &amp; Vellala Umapathy, G. (2023). <i>Phishing for dummies</i> (Cisco special ed.). John Wiley &amp; Sons.</p>
+    <p>The statistics are as the book reports them in 2023. Each one comes from another organization’s research, so check the original report before you quote a number in your own writing.</p>
+  </details>`;
+}
+
+intro();
+</script>
+</body>
+</html>
